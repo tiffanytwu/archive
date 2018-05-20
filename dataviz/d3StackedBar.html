@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Simple Stack</title>
+        <script src="https://d3js.org/d3.v4.min.js"></script>     
+        <style>
+            svg {
+                border: solid 1px #ccc;
+                font: 10px sans-serif;
+                shape-rendering: crispEdges;
+            }
+        </style>             
+    </head>
+    <body>
+
+        <div id="viz"></div>
+
+        <script type="text/javascript">
+            
+		var jsonData = [ {"Time":"15-JAN","Dark":3423405, "True":3423405, "Search":3423405, "Social":3423405, "All":3423405}, {"Time":"15-FEB","Dark":3661294, "True":3661294, "Search":3661294, "Social":3661294, "All":3661294}, {"Time":"15-MAR","Dark":3009445, "True":3009445, "Search":3009445, "Social":3009445, "All":3009445}, {"Time":"15-APR","Dark":4434541, "True":4434541, "Search":4434541, "Social":4434541, "All":4434541}, {"Time":"15-MAY","Dark":4451426, "True":4456426, "Search":4456426, "Social":4456426, "All":4456426}, {"Time":"15-JUN","Dark":4564412, "True":4564412, "Search":4564412, "Social":4564412, "All":4564412}, {"Time":"15-JUL","Dark":4241334, "True":4241334, "Search":4241334, "Social":4241334, "All":4241334}, {"Time":"15-AUG","Dark":4456444, "True":4456444, "Search":4456444, "Social":4456444, "All":4456444}, {"Time":"15-SEP","Dark":4462909, "True":4462909, "Search":4462909, "Social":4462909, "All":4462909}, {"Time":"15-OCT","Dark":4441412, "True":4441412, "Search":4441412, "Social":4441412, "All":4441412}, {"Time":"15-NOV","Dark":4564435, "True":4564435, "Search":4564435, "Social":4564435, "All":4564435}, {"Time":"15-DEC","Dark":4545401, "True":4545401, "Search":4545401, "Social":4545401, "All":4545401}];
+
+		var margin = {top: 25, right: 20, bottom: 25, left: 20}
+		var barPadding = 2;
+		var w = 1000 - margin.left - margin.right;
+		var h = 520 - margin.top - margin.bottom;
+
+		var svg = d3.select("#viz")
+			.append("svg")
+			.attr("width", w + margin.left + margin.right)
+			.attr("height", h + margin.top + margin.bottom)
+	 		.append("g")
+            .attr("transform", "translate(" + margin.left + ", " + margin.top + ")");
+		var stack = d3.stack()
+ 			.keys(["Dark", "True", "Search", "Social"])
+			.order(d3.stackOrderNone)
+			.offset(d3.stackOffsetNone);
+		var series = stack(jsonData)
+
+		var xScale = d3.scaleBand()
+			.range([0, w - margin.left - margin.right])
+			.domain(jsonData.map(function(data){return data["Time"]}));
+		var yScale = d3.scaleLinear()
+			.domain([0, d3.max(series[series.length - 1], function(d){ return d[0] + d[1]; })])
+			.range([0, h]);
+		var zScale = d3.scaleOrdinal()
+			.range(["red", "orange","lightgreen", "green"]);
+
+
+		var valgroup = svg.selectAll("g.valgroup")
+			.data(series)
+			.enter()
+			.append("svg:g")
+			.attr("class", "valgroup")
+			.style("fill", function(d, i) { return zScale(i); })
+			.style("stroke", function(d, i) { return d3.rgb(zScale(i)).darker(); });
+
+ 		var rect = valgroup.selectAll("rect")
+			.data(function(d){return d;})
+ 			.enter()
+ 			.append("svg:rect")
+			.attr("width", xScale.bandwidth()- barPadding)
+			.attr("x", function(d,i){
+				return i * xScale.bandwidth()+ barPadding; 
+			})
+			.attr("height", function(d,i){
+			    return yScale(d[1]);
+			})
+			.attr("y", function(d,i){
+				return h-yScale(d[1]) - yScale(d[0]);
+			})
+ 			.attr("stroke", "#4D4D4D")
+				.on("mouseover", function(data) {
+	                dynamicColor = this.style.fill;
+		 		d3.select(this)
+		 			.style("fill", "blue")
+		 			})
+		 			.on("mouseout", function(data) {
+		 		d3.select(this)
+		 			.style("fill", dynamicColor)
+ 			});
+
+		svg.selectAll("text")
+			.data(jsonData)
+ 			.enter()
+ 			.append("text")
+ 			.text(function(d) {
+ 				return Math.round(d["All"]/1000000) + "M";
+ 			})
+ 			.attr("x", function(d, i) {
+ 				return i * xScale.bandwidth()+ barPadding; 
+ 			})
+ 			.attr("transform", "translate(" + margin.left + ", " + (h + margin.top) + ")")
+ 			.attr("y", function(d,i) {
+ 				return h - yScale(d["All"]) + 11;
+ 			})
+ 			.attr("font-family", "sans-serif")
+ 			.attr("font-size", "11px")
+ 			.attr("fill", "white")
+ 			.attr("text-anchor", "middle");
+
+		d3.select("svg")
+			.attr("class", "axis")
+			.append("g")
+ 			.attr("transform", "translate(" + margin.left + ", " + (h + margin.top) + ")")
+				.call(d3.axisBottom(xScale)
+				.tickValues(xScale.domain().filter(function(d, i) { return !(i % 2); })));
+
+ 		svg.selectAll("rect")
+ 			.exit()
+ 			.remove()
+
+
+
+        </script>
+    </body>
+</html>
